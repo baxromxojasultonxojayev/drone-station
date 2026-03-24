@@ -1,0 +1,112 @@
+@import "tailwindcss";
+
+@theme {
+  --color-drone-bg: #0a0e17;
+  --color-drone-surface: #111827;
+  --color-drone-card: #1a2035;
+  --color-drone-border: #1e293b;
+  --color-drone-accent: #22d3ee;
+  --color-drone-accent-dim: #0891b2;
+  --color-drone-success: #10b981;
+  --color-drone-warning: #f59e0b;
+  --color-drone-danger: #ef4444;
+  --color-drone-text: #e2e8f0;
+  --color-drone-text-dim: #94a3b8;
+  --color-drone-hud-sky: #1e3a5f;
+  --color-drone-hud-ground: #5c3a1a;
+  --font-family-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html, body, #root {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: var(--font-family-sans);
+    background: var(--color-drone-bg);
+    color: var(--color-drone-text);
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--color-drone-surface);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-drone-border);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-drone-accent-dim);
+  }
+}
+
+@layer utilities {
+  .glass {
+    background: rgba(17, 24, 39, 0.7);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(30, 41, 59, 0.5);
+  }
+
+  .glass-card {
+    background: rgba(26, 32, 53, 0.8);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(30, 41, 59, 0.6);
+    border-radius: 12px;
+  }
+
+  .glow-accent {
+    box-shadow: 0 0 20px rgba(34, 211, 238, 0.15), 0 0 40px rgba(34, 211, 238, 0.05);
+  }
+
+  .glow-danger {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.3), 0 0 40px rgba(239, 68, 68, 0.1);
+  }
+
+  .text-glow {
+    text-shadow: 0 0 10px rgba(34, 211, 238, 0.5);
+  }
+
+  .animate-pulse-slow {
+    animation: pulse-slow 3s ease-in-out infinite;
+  }
+
+  @keyframes pulse-slow {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.4s ease-out;
+  }
+
+  @keyframes slide-in-right {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .animate-slide-in {
+    animation: slide-in-right 0.3s ease-out;
+  }
+
+  @keyframes blink-danger {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .animate-blink-danger {
+    animation: blink-danger 0.8s ease-in-out infinite;
+  }
+}
