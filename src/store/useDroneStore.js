@@ -68,6 +68,10 @@ const useDroneStore = create((set, get) => ({
     missionActive: false,
   },
 
+  setIsMissionActive: (active) => set((state) => ({
+    mission: { ...state.mission, missionActive: active },
+  })),
+
   // Geofence
   geofence: {
     zones: [],

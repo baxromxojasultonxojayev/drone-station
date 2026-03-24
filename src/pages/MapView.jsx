@@ -27,15 +27,17 @@ const droneIcon = new L.DivIcon({
 });
 
 // Component to handle map center updates
-const MapController = memo(() => {
+const MapController = memo(({ followDrone }) => {
   const map = useMap();
   const position = useDroneStore((s) => s.position, shallow);
   
   useEffect(() => {
-    if (position.lat && position.lng) {
-      map.panTo([position.lat, position.lng], { animate: true, duration: 1 });
+    if (followDrone && position.lat && position.lng) {
+      // Use setView with animate: false for ZERO LAG. 
+      // panTo with animations was causing the 1000ms INP bottleneck.
+      map.setView([position.lat, position.lng], map.getZoom(), { animate: false });
     }
-  }, [position.lat, position.lng, map]);
+  }, [position.lat, position.lng, followDrone, map]);
   
   return null;
 });
@@ -65,7 +67,6 @@ const DroneMarker = memo(() => {
   return <Marker position={[position.lat, position.lng]} icon={droneIcon} />;
 });
 
-// Selected point marker that subscribes to store
 const SelectionMarker = memo(() => {
   const selectedPoint = useDroneStore((s) => s.selectedPoint, shallow);
   if (!selectedPoint) return null;
@@ -104,8 +105,8 @@ const MapOverlay = memo(() => {
   const addWaypoint = useDroneStore((s) => s.addWaypoint);
 
   return (
-    <div className="absolute top-4 left-4 z-[1000] flex flex-col gap-2">
-      <div className="glass-card p-3 flex flex-col gap-1">
+    <div className="absolute top-4 left-4 z-[1000] flex flex-col gap-2 pointer-events-none">
+      <div className="glass-card p-3 flex flex-col gap-1 pointer-events-auto">
         <span className="text-[10px] text-drone-text-dim uppercase font-bold tracking-widest">Koordinatalar</span>
         <div className="flex gap-4">
           <div>
@@ -120,7 +121,7 @@ const MapOverlay = memo(() => {
       </div>
 
       {selectedPoint && (
-        <div className="glass-card p-3 border-drone-accent animate-slide-in flex flex-col gap-3">
+        <div className="glass-card p-3 border-drone-accent animate-slide-in flex flex-col gap-3 pointer-events-auto">
           <div className="flex items-center justify-between">
             <span className="text-[10px] text-drone-accent uppercase font-bold tracking-widest">Tanlangan nuqta</span>
             <button onClick={() => setSelectedPoint(null)} className="text-drone-text-dim hover:text-drone-danger">
@@ -155,8 +156,8 @@ const MapOverlay = memo(() => {
 });
 
 const MapView = memo(() => {
-  // MapView body is now 100% static. 
-  // MapContainer will only render ONCE.
+  const [followDrone, setFollowDrone] = useState(true);
+
   return (
     <div className="h-full w-full relative bg-drone-bg">
       <MapContainer
@@ -164,13 +165,13 @@ const MapView = memo(() => {
         zoom={16}
         className="h-full w-full"
         zoomControl={false}
-        preferCanvas={true} // High-performance canvas rendering for all layers
+        preferCanvas={true}
       >
         <TileLayer
           url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
         />
-        <MapController />
+        <MapController followDrone={followDrone} />
         <MapClickHandler />
         <FlightPath />
         <DroneMarker />
@@ -180,12 +181,31 @@ const MapView = memo(() => {
       <MapOverlay />
 
       <div className="absolute bottom-4 right-4 z-[1000] flex flex-col gap-2">
-        <button className="w-10 h-10 glass-card flex items-center justify-center text-drone-text hover:text-drone-accent transition-colors">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
+        <button 
+          onClick={() => setFollowDrone(!followDrone)}
+          className={`w-12 h-12 glass-card flex items-center justify-center transition-all duration-300 ${
+            followDrone ? 'text-drone-accent border-drone-accent' : 'text-drone-text-dim'
+          }`}
+          title={followDrone ? "Avto-kuzatish: YOQILGAN" : "Avto-kuzatish: O'CHIRILGAN"}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-6 h-6">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+            {followDrone && <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1" className="animate-ping opacity-20" />}
           </svg>
         </button>
+        
+        <div className="flex flex-col gap-1 bg-drone-bg/80 backdrop-blur-sm p-1 rounded-xl border border-drone-border">
+          <button className="w-10 h-10 flex items-center justify-center text-drone-text hover:text-drone-accent transition-colors">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5">
+              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+          </button>
+          <button className="w-10 h-10 flex items-center justify-center text-drone-text hover:text-drone-accent transition-colors">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5">
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
   );

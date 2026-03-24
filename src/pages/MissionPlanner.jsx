@@ -9,10 +9,6 @@ const MissionVisualizer = memo(({ waypoints }) => {
     const width = 600;
     const height = 300;
     
-    // Scale waypoints to SVG viewbox
-    // X axis: sequential distancing
-    // Y axis: altitude (mapped 0-150m to 300-0px)
-    
     return waypoints.map((wp, i) => {
       const x = margin + (i / Math.max(1, waypoints.length - 1)) * (width - margin * 2);
       const y = height - margin - (wp.alt / 150) * (height - margin * 2);
@@ -25,7 +21,6 @@ const MissionVisualizer = memo(({ waypoints }) => {
       <h3 className="text-sm font-bold uppercase tracking-wider text-drone-text-dim">Missiya vizualizatsiyasi</h3>
       <div className="flex-1 border-2 border-dashed border-drone-border rounded-2xl flex items-center justify-center relative overflow-hidden bg-drone-bg/50">
         <svg viewBox="0 0 600 300" className="w-full h-full">
-          {/* Grid lines */}
           {[0, 50, 100, 150].map((alt) => {
             const y = 300 - 40 - (alt / 150) * (300 - 80);
             return (
@@ -45,7 +40,6 @@ const MissionVisualizer = memo(({ waypoints }) => {
               strokeLinecap="round"
               strokeLinejoin="round"
               className="drop-shadow-[0_0_8px_rgba(34,211,238,0.5)]"
-              strokeDasharray={waypoints.length > 0 ? "none" : "8,8"}
             />
           )}
 
@@ -54,15 +48,9 @@ const MissionVisualizer = memo(({ waypoints }) => {
             const y = 300 - 40 - (wp.alt / 150) * (300 - 80);
             return (
               <g key={wp.id} className="group cursor-help">
-                <circle cx={x} cy={y} r="6" fill="#22d3ee" className="hover:r-8 transition-all" />
+                <circle cx={x} cy={y} r="6" fill="#22d3ee" />
                 <circle cx={x} cy={y} r="10" stroke="#22d3ee" strokeWidth="1" fill="none" className="animate-pulse opacity-30" />
                 <text x={x} y={y - 12} fill="#22d3ee" fontSize="10" fontWeight="bold" textAnchor="middle">{i + 1}</text>
-                
-                {/* Tooltip on hover */}
-                <rect x={x - 30} y={y + 15} width="60" height="20" rx="4" fill="#1a2035" className="opacity-0 group-hover:opacity-100 transition-opacity" />
-                <text x={x} y={y + 28} fill="white" fontSize="9" textAnchor="middle" className="opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                  Alt: {wp.alt}m
-                </text>
               </g>
             );
           })}
@@ -85,7 +73,12 @@ export default function MissionPlanner() {
   const addWaypoint = useDroneStore((s) => s.addWaypoint);
   const removeWaypoint = useDroneStore((s) => s.removeWaypoint);
   const clearMission = useDroneStore((s) => s.clearMission);
+  const setIsMissionActive = useDroneStore((s) => s.setIsMissionActive);
   const [alt, setAlt] = useState(50);
+
+  const toggleMission = () => {
+    setIsMissionActive(!mission.missionActive);
+  };
 
   const addNewWaypoint = () => {
     const dronePos = useDroneStore.getState().position;
@@ -99,7 +92,6 @@ export default function MissionPlanner() {
 
   return (
     <div className="h-full w-full p-6 flex gap-6 overflow-hidden">
-      {/* Nuqtalar ro'yxati */}
       <div className="w-80 glass-card flex flex-col h-full overflow-hidden">
         <div className="p-4 border-b border-drone-border flex items-center justify-between">
           <h3 className="text-sm font-bold uppercase tracking-wider text-drone-accent">Missiya rejasi</h3>
@@ -143,10 +135,6 @@ export default function MissionPlanner() {
                     <span className="text-drone-text-dim block">UZUN. (LNG)</span>
                     <span className="text-drone-text">{wp.lng.toFixed(6)}</span>
                   </div>
-                  <div className="col-span-2 mt-1 flex items-center justify-between border-t border-drone-border/30 pt-1">
-                    <span className="text-drone-text-dim uppercase">Balandlik</span>
-                    <span className="text-drone-accent font-bold">{wp.alt} m</span>
-                  </div>
                 </div>
               </div>
             ))
@@ -181,13 +169,17 @@ export default function MissionPlanner() {
             </button>
           </div>
           <button
+            onClick={toggleMission}
+            disabled={mission.waypoints.length === 0}
             className={`w-full py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 ${
               mission.waypoints.length > 0
-                ? 'bg-drone-success text-drone-bg glow-accent'
+                ? mission.missionActive 
+                  ? 'bg-drone-danger text-white shadow-[0_0_20px_rgba(239,68,68,0.4)]' 
+                  : 'bg-drone-success text-drone-bg glow-accent'
                 : 'bg-drone-border text-drone-text-dim cursor-not-allowed'
             }`}
           >
-            Missiyani yuklash
+            {mission.missionActive ? 'Missiyani toʻxtatish' : 'Missiyani boshlash'}
           </button>
         </div>
       </div>
