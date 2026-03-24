@@ -10,8 +10,6 @@ class TelemetrySimulator {
     this.heading = 0;
     this.batteryPercent = 100;
     this.missionPhase = 'cruise'; 
-    this.orbitAngle = 0;
-    this.orbitRadius = 0.003; 
     this.intervalId = null;
     this.target = null;
     this.speed = 0.00015; // Degrees per frame at 5Hz (~10m/s)
@@ -74,14 +72,16 @@ class TelemetrySimulator {
         this.target = null;
         this.missionPhase = 'hover';
         groundSpeed = 0.5;
+        this.heading = (this.heading + Math.sin(this.time * 0.1) * 2 + 360) % 360;
       }
     } else {
-      // Orbit if no target
-      this.orbitAngle += 0.005;
-      this.currentPosition.lat = this.homePosition.lat + Math.sin(this.orbitAngle) * this.orbitRadius;
-      this.currentPosition.lng = this.homePosition.lng + Math.cos(this.orbitAngle) * this.orbitRadius;
-      this.heading = ((this.orbitAngle * 180 / Math.PI) + 90) % 360;
-      groundSpeed = 8 + Math.sin(this.time * 0.4) * 2;
+      // HOVER BY DEFAULT instead of orbiting at start.
+      // This addresses the user's question "why is it moving?"
+      this.missionPhase = 'hover';
+      this.currentPosition.lat += Math.sin(this.time * 0.1) * 0.000001; // Tiny idle jitter
+      this.currentPosition.lng += Math.cos(this.time * 0.1) * 0.000001;
+      this.heading = (this.heading + Math.sin(this.time * 0.2) * 0.5 + 360) % 360;
+      groundSpeed = 0.2;
     }
 
     const yaw = (this.heading + 360) % 360;

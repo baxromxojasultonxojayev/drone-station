@@ -13,17 +13,12 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-const droneIcon = new L.DivIcon({
-  className: 'custom-drone-icon',
-  html: `
-    <div class="relative w-8 h-8 flex items-center justify-center" id="drone-marker-inner">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2.5" class="w-full h-full drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]">
-        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-      </svg>
-    </div>
-  `,
-  iconSize: [32, 32],
-  iconAnchor: [16, 16],
+// Realistic Drone Icon using the generated image
+const droneIcon = new L.Icon({
+  iconUrl: '/drone.png',
+  iconSize: [64, 64],
+  iconAnchor: [32, 32],
+  className: 'drone-icon-glow',
 });
 
 // Component to handle map center updates
@@ -33,8 +28,6 @@ const MapController = memo(({ followDrone }) => {
   
   useEffect(() => {
     if (followDrone && position.lat && position.lng) {
-      // Use setView with animate: false for ZERO LAG. 
-      // panTo with animations was causing the 1000ms INP bottleneck.
       map.setView([position.lat, position.lng], map.getZoom(), { animate: false });
     }
   }, [position.lat, position.lng, followDrone, map]);
@@ -56,15 +49,18 @@ const MapClickHandler = memo(() => {
 const DroneMarker = memo(() => {
   const position = useDroneStore((s) => s.position, shallow);
   const heading = useDroneStore((s) => s.attitude.heading);
+  const markerRef = useRef(null);
 
   useEffect(() => {
-    const el = document.getElementById('drone-marker-inner');
-    if (el) {
-      el.style.transform = `rotate(${heading}deg)`;
+    if (markerRef.current) {
+      const el = markerRef.current.getElement();
+      if (el) {
+        el.style.transform = `${el.style.transform.replace(/rotate\([^)]*\)/g, '')} rotate(${heading}deg)`;
+      }
     }
-  }, [heading]);
+  }, [heading, position.lat, position.lng]);
 
-  return <Marker position={[position.lat, position.lng]} icon={droneIcon} />;
+  return <Marker ref={markerRef} position={[position.lat, position.lng]} icon={droneIcon} />;
 });
 
 const SelectionMarker = memo(() => {
