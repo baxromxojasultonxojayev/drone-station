@@ -28,6 +28,11 @@ export default function ArtificialHorizon() {
 
     let frameId;
     const render = () => {
+      if (document.hidden) {
+        frameId = requestAnimationFrame(render);
+        return;
+      }
+      
       // Get FRESH state directly from store without triggering React re-render
       const state = useDroneStore.getState();
       const { attitude, position, flightMode: fm, armed: am } = state;
@@ -106,11 +111,8 @@ export default function ArtificialHorizon() {
       ctx.restore();
 
       // Fixed aircraft symbol (center crosshair)
-      ctx.save();
       ctx.strokeStyle = '#22d3ee';
       ctx.lineWidth = 2.5;
-      ctx.shadowColor = '#22d3ee';
-      ctx.shadowBlur = 6;
 
       // Left wing
       ctx.beginPath();
@@ -127,11 +129,10 @@ export default function ArtificialHorizon() {
       ctx.stroke();
 
       // Center dot
+      ctx.fillStyle = '#22d3ee';
       ctx.beginPath();
       ctx.arc(cx, cy, 3, 0, Math.PI * 2);
       ctx.fill();
-
-      ctx.restore();
 
       // Roll indicator arc at top
       ctx.save();
@@ -230,7 +231,7 @@ export default function ArtificialHorizon() {
       ctx.fillStyle = '#94a3b8';
       ctx.textAlign = 'left';
       ctx.font = '9px Inter';
-      ctx.fillText('GND SPD', 14, cy - 26);
+      ctx.fillText('YER TEZ.', 14, cy - 26);
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 14px Inter, monospace';
       ctx.fillText(`${position.groundSpeed}`, 14, cy - 10);
@@ -240,7 +241,7 @@ export default function ArtificialHorizon() {
 
       ctx.fillStyle = '#94a3b8';
       ctx.font = '9px Inter';
-      ctx.fillText('AIR SPD', 14, cy + 16);
+      ctx.fillText('HAVO TEZ.', 14, cy + 16);
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 14px Inter, monospace';
       ctx.fillText(`${position.airSpeed}`, 14, cy + 32);
@@ -254,7 +255,7 @@ export default function ArtificialHorizon() {
       ctx.fillStyle = '#94a3b8';
       ctx.textAlign = 'left';
       ctx.font = '9px Inter';
-      ctx.fillText('ALT', w - 60, cy - 26);
+      ctx.fillText('BALANDL.', w - 60, cy - 26);
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 14px Inter, monospace';
       ctx.fillText(`${position.relativeAlt}`, w - 60, cy - 10);
@@ -264,7 +265,7 @@ export default function ArtificialHorizon() {
 
       ctx.fillStyle = '#94a3b8';
       ctx.font = '9px Inter';
-      ctx.fillText('V/S', w - 60, cy + 16);
+      ctx.fillText('V. TEZLIK', w - 60, cy + 16);
       ctx.fillStyle = position.climbRate >= 0 ? '#10b981' : '#ef4444';
       ctx.font = 'bold 14px Inter, monospace';
       ctx.fillText(`${position.climbRate > 0 ? '+' : ''}${position.climbRate}`, w - 60, cy + 32);
@@ -286,7 +287,7 @@ export default function ArtificialHorizon() {
 
       // Armed status
       ctx.font = 'bold 10px Inter';
-      const armedText = am ? 'ARMED' : 'DISARMED';
+      const armedText = am ? 'FAOL' : 'OʻCHIK';
       ctx.fillStyle = am ? '#ef4444' : '#10b981';
       ctx.fillText(armedText, cx, 42);
 
@@ -308,7 +309,7 @@ export default function ArtificialHorizon() {
     <div className="glass-card p-3 flex flex-col items-center h-full">
       <div className="flex items-center justify-between w-full mb-2 px-1">
         <h3 className="text-xs font-semibold text-drone-text-dim uppercase tracking-wider">
-          Artificial Horizon
+          Sun’iy gorizont
         </h3>
         <span className="text-[10px] text-drone-accent font-mono">HUD</span>
       </div>

@@ -74,6 +74,9 @@ const useDroneStore = create((set, get) => ({
     breach: false,
   },
 
+  // Selection
+  selectedPoint: null,
+ 
   // Alerts
   alerts: [],
 
@@ -139,6 +142,8 @@ const useDroneStore = create((set, get) => ({
   })),
 
   clearAlerts: () => set({ alerts: [] }),
+
+  setSelectedPoint: (point) => set({ selectedPoint: point }),
 
   emergencyLand: () => {
     const state = get();

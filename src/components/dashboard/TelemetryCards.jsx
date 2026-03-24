@@ -28,7 +28,7 @@ const icons = {
 
 const TelemetryValue = memo(({ label, value, unit, icon, color = 'text-drone-accent', trend }) => {
   return (
-    <div className="glass-card p-3 flex flex-col gap-1 animate-fade-in hover:glow-accent transition-shadow duration-300">
+    <div className="glass-card p-3 flex flex-col gap-1 hover:glow-accent transition-shadow duration-300">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5 text-drone-text-dim">
           <span className={color}>{icon}</span>
@@ -55,7 +55,7 @@ const TelemetryCards = memo(() => {
   return (
     <div className="grid grid-cols-2 gap-2">
       <TelemetryValue
-        label="Altitude"
+        label="Balandlik"
         value={position.relativeAlt.toFixed(1)}
         unit="m"
         icon={icons.altitude}
@@ -63,21 +63,21 @@ const TelemetryCards = memo(() => {
         trend={position.climbRate}
       />
       <TelemetryValue
-        label="Speed"
+        label="Tezlik"
         value={position.groundSpeed.toFixed(1)}
         unit="m/s"
         icon={icons.speed}
         color="text-drone-success"
       />
       <TelemetryValue
-        label="Climb"
+        label="Vertikal tezlik"
         value={position.climbRate.toFixed(2)}
         unit="m/s"
         icon={icons.climb}
         color={position.climbRate >= 0 ? 'text-drone-success' : 'text-drone-danger'}
       />
       <TelemetryValue
-        label="Heading"
+        label="Yoʻnalish (Kurs)"
         value={attitude.heading.toFixed(0)}
         unit="°"
         icon={icons.heading}

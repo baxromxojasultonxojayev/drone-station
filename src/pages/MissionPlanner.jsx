@@ -20,11 +20,11 @@ export default function MissionPlanner() {
 
   return (
     <div className="h-full w-full p-6 flex gap-6 overflow-hidden">
-      {/* Waypoint List */}
+      {/* Nuqtalar ro'yxati */}
       <div className="w-80 glass-card flex flex-col h-full overflow-hidden">
         <div className="p-4 border-b border-drone-border flex items-center justify-between">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-drone-accent">Mission Plan</h3>
-          <span className="text-[10px] font-mono text-drone-text-dim">{mission.waypoints.length} WP</span>
+          <h3 className="text-sm font-bold uppercase tracking-wider text-drone-accent">Missiya rejasi</h3>
+          <span className="text-[10px] font-mono text-drone-text-dim">{mission.waypoints.length} NP</span>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 custom-scrollbar">
@@ -34,7 +34,7 @@ export default function MissionPlanner() {
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
                 <circle cx="12" cy="10" r="3" />
               </svg>
-              <p className="text-xs">No waypoints defined.<br/>Add waypoints via map or auto-generate.</p>
+              <p className="text-xs">Nuqtalar belgilanmagan.<br/>Xarita orqali qo'shing yoki avtomatik yarating.</p>
             </div>
           ) : (
             mission.waypoints.map((wp, i) => (
@@ -57,15 +57,15 @@ export default function MissionPlanner() {
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-[10px] font-mono">
                   <div>
-                    <span className="text-drone-text-dim block">LAT</span>
+                    <span className="text-drone-text-dim block">KENG. (LAT)</span>
                     <span className="text-drone-text">{wp.lat.toFixed(6)}</span>
                   </div>
                   <div>
-                    <span className="text-drone-text-dim block">LNG</span>
+                    <span className="text-drone-text-dim block">UZUN. (LNG)</span>
                     <span className="text-drone-text">{wp.lng.toFixed(6)}</span>
                   </div>
                   <div className="col-span-2 mt-1 flex items-center justify-between border-t border-drone-border/30 pt-1">
-                    <span className="text-drone-text-dim uppercase">Altitude</span>
+                    <span className="text-drone-text-dim uppercase">Balandlik</span>
                     <span className="text-drone-accent font-bold">{wp.alt} m</span>
                   </div>
                 </div>
@@ -76,7 +76,7 @@ export default function MissionPlanner() {
 
         <div className="p-4 border-t border-drone-border flex flex-col gap-3">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] uppercase font-bold text-drone-text-dim">WP Alt:</span>
+            <span className="text-[10px] uppercase font-bold text-drone-text-dim">WP BAL.:</span>
             <input
               type="range"
               min="10"
@@ -92,13 +92,13 @@ export default function MissionPlanner() {
               onClick={addNewWaypoint}
               className="px-3 py-2 bg-drone-accent/10 border border-drone-accent text-drone-accent rounded-lg text-xs font-bold hover:bg-drone-accent transition-all duration-300 hover:text-drone-bg"
             >
-              Add Point
+              Nuqta qoʻshish
             </button>
             <button
               onClick={clearMission}
               className="px-3 py-2 bg-drone-danger/10 border border-drone-danger text-drone-danger rounded-lg text-xs font-bold hover:bg-drone-danger transition-all duration-300 hover:text-white"
             >
-              Clear All
+              Tozalash
             </button>
           </div>
           <button
@@ -108,14 +108,14 @@ export default function MissionPlanner() {
                 : 'bg-drone-border text-drone-text-dim cursor-not-allowed'
             }`}
           >
-            Upload Mission
+            Missiyani yuklash
           </button>
         </div>
       </div>
 
-      {/* Visualizer Placeholder */}
+      {/* Vizualizatsiya */}
       <div className="flex-1 glass-card p-6 flex flex-col gap-4">
-        <h3 className="text-sm font-bold uppercase tracking-wider text-drone-text-dim">Mission Visualizer</h3>
+        <h3 className="text-sm font-bold uppercase tracking-wider text-drone-text-dim">Missiya vizualizatsiyasi</h3>
         <div className="flex-1 border-2 border-dashed border-drone-border rounded-2xl flex items-center justify-center relative overflow-hidden">
           <svg viewBox="0 0 400 300" className="w-full h-full opacity-20">
             <path
@@ -133,7 +133,7 @@ export default function MissionPlanner() {
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-12">
             <p className="text-drone-text-dim text-sm max-w-sm">
-              3D Waypoint visualizer and flight path trajectory calculation engine.
+              3D nuqtalar vizualizatsiyasi va parvoz trayektoriyasini hisoblash tizimi.
             </p>
           </div>
         </div>

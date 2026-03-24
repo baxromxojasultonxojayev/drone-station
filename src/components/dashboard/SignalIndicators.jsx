@@ -21,7 +21,7 @@ const SignalBar = memo(({ label, value, icon }) => {
   const colorClass = getColor(value);
 
   return (
-    <div className="glass-card p-3 flex flex-col gap-2 animate-fade-in hover:glow-accent transition-shadow duration-300">
+    <div className="glass-card p-3 flex flex-col gap-2 hover:glow-accent transition-shadow duration-300">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
           <span className="text-drone-text-dim">{icon}</span>

@@ -1,5 +1,5 @@
 import { useEffect, useState, memo, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Polyline, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Polyline, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { shallow } from 'zustand/shallow';
@@ -16,32 +16,66 @@ L.Icon.Default.mergeOptions({
 const droneIcon = new L.DivIcon({
   className: 'custom-drone-icon',
   html: `
-    <div class="relative w-8 h-8 flex items-center justify-center transition-transform duration-300" id="drone-marker-inner">
+    <div class="relative w-8 h-8 flex items-center justify-center" id="drone-marker-inner">
       <svg viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2.5" class="w-full h-full drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]">
         <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
       </svg>
-      <div class="absolute -top-1 -right-1 w-2 h-2 bg-drone-danger rounded-full animate-ping"></div>
     </div>
   `,
   iconSize: [32, 32],
   iconAnchor: [16, 16],
 });
 
-function MapController({ center }) {
+// Component to handle map center updates
+const MapController = memo(() => {
   const map = useMap();
-  useEffect(() => {
-    if (center) {
-      map.panTo(center, { animate: true, duration: 1 });
-    }
-  }, [center, map]);
-  return null;
-}
-
-const MapView = memo(() => {
   const position = useDroneStore((s) => s.position, shallow);
-  const attitude = useDroneStore((s) => s.attitude, shallow);
+  
+  useEffect(() => {
+    if (position.lat && position.lng) {
+      map.panTo([position.lat, position.lng], { animate: true, duration: 1 });
+    }
+  }, [position.lat, position.lng, map]);
+  
+  return null;
+});
+
+// Component to handle map clicks for coordinate selection
+const MapClickHandler = memo(() => {
+  const setSelectedPoint = useDroneStore((s) => s.setSelectedPoint);
+  useMapEvents({
+    click: (e) => {
+      setSelectedPoint(e.latlng);
+    },
+  });
+  return null;
+});
+
+const DroneMarker = memo(() => {
+  const position = useDroneStore((s) => s.position, shallow);
+  const heading = useDroneStore((s) => s.attitude.heading);
+
+  useEffect(() => {
+    const el = document.getElementById('drone-marker-inner');
+    if (el) {
+      el.style.transform = `rotate(${heading}deg)`;
+    }
+  }, [heading]);
+
+  return <Marker position={[position.lat, position.lng]} icon={droneIcon} />;
+});
+
+// Selected point marker that subscribes to store
+const SelectionMarker = memo(() => {
+  const selectedPoint = useDroneStore((s) => s.selectedPoint, shallow);
+  if (!selectedPoint) return null;
+  return <Marker position={[selectedPoint.lat, selectedPoint.lng]} />;
+});
+
+const FlightPath = memo(() => {
   const [path, setPath] = useState([]);
   const lastUpdateRef = useRef(0);
+  const position = useDroneStore((s) => s.position, shallow);
 
   useEffect(() => {
     const now = Date.now();
@@ -51,16 +85,8 @@ const MapView = memo(() => {
         setPath((prev) => {
           const last = prev[prev.length - 1];
           if (!last) return [[position.lat, position.lng]];
-          
-          const dist = Math.sqrt(
-            Math.pow(position.lat - last[0], 2) + 
-            Math.pow(position.lng - last[1], 2)
-          );
-          
-          if (dist > 0.00005) { // ~5 meters
-            
-            return [...prev, [position.lat, position.lng]].slice(-500);
-          }
+          const dist = Math.sqrt(Math.pow(position.lat - last[0], 2) + Math.pow(position.lng - last[1], 2));
+          if (dist > 0.00005) return [...prev, [position.lat, position.lng]].slice(-500);
           return prev;
         });
       });
@@ -68,48 +94,90 @@ const MapView = memo(() => {
     }
   }, [position.lat, position.lng]);
 
-  useEffect(() => {
-    const el = document.getElementById('drone-marker-inner');
-    if (el) {
-      el.style.transform = `rotate(${attitude.heading}deg)`;
-    }
-  }, [attitude.heading]);
+  return <Polyline positions={path} pathOptions={{ color: '#22d3ee', weight: 2, opacity: 0.6, dashArray: '5, 5' }} />;
+});
 
+const MapOverlay = memo(() => {
+  const position = useDroneStore((s) => s.position, shallow);
+  const selectedPoint = useDroneStore((s) => s.selectedPoint, shallow);
+  const setSelectedPoint = useDroneStore((s) => s.setSelectedPoint);
+  const addWaypoint = useDroneStore((s) => s.addWaypoint);
+
+  return (
+    <div className="absolute top-4 left-4 z-[1000] flex flex-col gap-2">
+      <div className="glass-card p-3 flex flex-col gap-1">
+        <span className="text-[10px] text-drone-text-dim uppercase font-bold tracking-widest">Koordinatalar</span>
+        <div className="flex gap-4">
+          <div>
+            <span className="text-[9px] text-drone-accent uppercase block">KENG.</span>
+            <span className="text-xs font-mono text-drone-text">{position.lat.toFixed(7)}°</span>
+          </div>
+          <div>
+            <span className="text-[9px] text-drone-accent uppercase block">UZUN.</span>
+            <span className="text-xs font-mono text-drone-text">{position.lng.toFixed(7)}°</span>
+          </div>
+        </div>
+      </div>
+
+      {selectedPoint && (
+        <div className="glass-card p-3 border-drone-accent animate-slide-in flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] text-drone-accent uppercase font-bold tracking-widest">Tanlangan nuqta</span>
+            <button onClick={() => setSelectedPoint(null)} className="text-drone-text-dim hover:text-drone-danger">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-4 h-4">
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+          <div className="flex gap-4">
+            <div>
+              <span className="text-[9px] text-drone-text-dim uppercase block">LAT</span>
+              <span className="text-xs font-mono text-drone-text">{selectedPoint.lat.toFixed(6)}</span>
+            </div>
+            <div>
+              <span className="text-[9px] text-drone-text-dim uppercase block">LNG</span>
+              <span className="text-xs font-mono text-drone-text">{selectedPoint.lng.toFixed(6)}</span>
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              addWaypoint({ lat: selectedPoint.lat, lng: selectedPoint.lng, alt: 50 });
+              setSelectedPoint(null);
+            }}
+            className="w-full py-2 bg-drone-accent text-drone-bg text-[10px] font-bold uppercase rounded-lg hover:brightness-110 active:scale-95 transition-all"
+          >
+            Nuqta qoʻshish
+          </button>
+        </div>
+      )}
+    </div>
+  );
+});
+
+const MapView = memo(() => {
+  // MapView body is now 100% static. 
+  // MapContainer will only render ONCE.
   return (
     <div className="h-full w-full relative bg-drone-bg">
       <MapContainer
-        center={[position.lat, position.lng]}
+        center={[41.311081, 69.240562]} 
         zoom={16}
         className="h-full w-full"
         zoomControl={false}
+        preferCanvas={true} // High-performance canvas rendering for all layers
       >
         <TileLayer
           url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
         />
-        <MapController center={[position.lat, position.lng]} />
-        <Polyline
-          positions={path}
-          pathOptions={{ color: '#22d3ee', weight: 2, opacity: 0.6, dashArray: '5, 5' }}
-        />
-        <Marker position={[position.lat, position.lng]} icon={droneIcon} />
+        <MapController />
+        <MapClickHandler />
+        <FlightPath />
+        <DroneMarker />
+        <SelectionMarker />
       </MapContainer>
 
-      <div className="absolute top-4 left-4 z-[1000] flex flex-col gap-2">
-        <div className="glass-card p-3 animate-fade-in flex flex-col gap-1">
-          <span className="text-[10px] text-drone-text-dim uppercase font-bold tracking-widest">Coordinates</span>
-          <div className="flex gap-4">
-            <div>
-              <span className="text-[9px] text-drone-accent uppercase block">LAT</span>
-              <span className="text-xs font-mono text-drone-text">{position.lat.toFixed(7)}°</span>
-            </div>
-            <div>
-              <span className="text-[9px] text-drone-accent uppercase block">LNG</span>
-              <span className="text-xs font-mono text-drone-text">{position.lng.toFixed(7)}°</span>
-            </div>
-          </div>
-        </div>
-      </div>
+      <MapOverlay />
 
       <div className="absolute bottom-4 right-4 z-[1000] flex flex-col gap-2">
         <button className="w-10 h-10 glass-card flex items-center justify-center text-drone-text hover:text-drone-accent transition-colors">

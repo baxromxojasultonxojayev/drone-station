@@ -15,14 +15,14 @@ const BatteryGauge = memo(() => {
   const cellVoltage = (battery.voltage / battery.cellCount).toFixed(2);
 
   return (
-    <div className="glass-card p-3 animate-fade-in">
+    <div className="glass-card p-3">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 text-drone-text-dim">
             <rect x="1" y="6" width="18" height="12" rx="2" />
             <path d="M23 10v4" />
           </svg>
-          <span className="text-[10px] uppercase tracking-wider font-medium text-drone-text-dim">Battery</span>
+          <span className="text-[10px] uppercase tracking-wider font-medium text-drone-text-dim">Batareya</span>
         </div>
         <span className="text-[10px] text-drone-text-dim font-mono">{battery.cellCount}S</span>
       </div>
@@ -30,7 +30,7 @@ const BatteryGauge = memo(() => {
       <div className="flex items-baseline gap-1 mb-2">
         <span
           className="text-3xl font-bold font-mono"
-          style={{ color: color.bar, textShadow: `0 0 10px ${color.glow}` }}
+          style={{ color: color.bar }}
         >
           {battery.percentage}
         </span>
@@ -42,23 +42,22 @@ const BatteryGauge = memo(() => {
           className="h-full rounded-full transition-all duration-500 ease-out"
           style={{
             width: `${battery.percentage}%`,
-            background: `linear-gradient(90deg, ${color.bar}, ${color.bar}aa)`,
-            boxShadow: `0 0 8px ${color.glow}`,
+            background: color.bar,
           }}
         />
       </div>
 
       <div className="grid grid-cols-3 gap-2">
         <div className="flex flex-col">
-          <span className="text-[9px] text-drone-text-dim uppercase">Voltage</span>
+          <span className="text-[9px] text-drone-text-dim uppercase">Kuchlanish</span>
           <span className="text-sm font-mono font-semibold text-drone-text">{battery.voltage}V</span>
         </div>
         <div className="flex flex-col">
-          <span className="text-[9px] text-drone-text-dim uppercase">Current</span>
+          <span className="text-[9px] text-drone-text-dim uppercase">Tok kuchi</span>
           <span className="text-sm font-mono font-semibold text-drone-text">{battery.current}A</span>
         </div>
         <div className="flex flex-col">
-          <span className="text-[9px] text-drone-text-dim uppercase">Cell</span>
+          <span className="text-[9px] text-drone-text-dim uppercase">Yacheyka</span>
           <span className="text-sm font-mono font-semibold text-drone-text">{cellVoltage}V</span>
         </div>
       </div>

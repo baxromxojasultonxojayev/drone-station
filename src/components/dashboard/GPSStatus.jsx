@@ -10,7 +10,7 @@ const GPSStatus = memo(() => {
     switch (gps.fixType) {
       case 3: return { text: '3D Fix', color: 'text-drone-success' };
       case 2: return { text: '2D Fix', color: 'text-drone-warning' };
-      default: return { text: 'No Fix', color: 'text-drone-danger' };
+      default: return { text: 'Aloqa yoʻq', color: 'text-drone-danger' };
     }
   };
 
@@ -18,7 +18,7 @@ const GPSStatus = memo(() => {
   const hdopColor = gps.hdop < 1.5 ? 'text-drone-success' : gps.hdop < 3 ? 'text-drone-warning' : 'text-drone-danger';
 
   return (
-    <div className="glass-card p-3 animate-fade-in">
+    <div className="glass-card p-3">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-1.5">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 text-drone-text-dim">
@@ -33,7 +33,7 @@ const GPSStatus = memo(() => {
 
       <div className="grid grid-cols-2 gap-2 mb-2">
         <div>
-          <span className="text-[9px] text-drone-text-dim uppercase">Satellites</span>
+          <span className="text-[9px] text-drone-text-dim uppercase">Yoʻldoshlar</span>
           <div className="flex items-baseline gap-0.5">
             <span className="text-xl font-bold font-mono text-drone-accent">{gps.satellites}</span>
             <svg viewBox="0 0 24 24" fill="currentColor" className="w-3 h-3 text-drone-accent">
@@ -50,11 +50,11 @@ const GPSStatus = memo(() => {
       <div className="border-t border-drone-border pt-2">
         <div className="grid grid-cols-2 gap-1">
           <div>
-            <span className="text-[9px] text-drone-text-dim">LAT</span>
+            <span className="text-[9px] text-drone-text-dim">KENG (LAT)</span>
             <span className="text-xs font-mono text-drone-text block">{position.lat.toFixed(6)}</span>
           </div>
           <div>
-            <span className="text-[9px] text-drone-text-dim">LNG</span>
+            <span className="text-[9px] text-drone-text-dim">UZUN (LNG)</span>
             <span className="text-xs font-mono text-drone-text block">{position.lng.toFixed(6)}</span>
           </div>
         </div>

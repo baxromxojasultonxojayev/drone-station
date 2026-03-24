@@ -1,9 +1,10 @@
+import { memo } from 'react';
 import { NavLink } from 'react-router-dom';
 
 const navItems = [
   {
     path: '/',
-    label: 'Dashboard',
+    label: 'Asosiy panel',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
         <rect x="3" y="3" width="7" height="7" />
@@ -15,7 +16,7 @@ const navItems = [
   },
   {
     path: '/map',
-    label: 'Navigation',
+    label: 'Navigatsiya',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
         <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" />
@@ -26,7 +27,7 @@ const navItems = [
   },
   {
     path: '/mission',
-    label: 'Mission',
+    label: 'Missiya',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
         <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
@@ -36,7 +37,7 @@ const navItems = [
   },
   {
     path: '/settings',
-    label: 'Settings',
+    label: 'Sozlamalar',
     icon: (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5">
         <circle cx="12" cy="12" r="3" />
@@ -46,10 +47,10 @@ const navItems = [
   },
 ];
 
-export default function Sidebar() {
+const Sidebar = memo(() => {
   return (
     <aside className="w-16 h-full glass border-r border-drone-border flex flex-col items-center py-6 gap-8">
-      <div className="w-10 h-10 rounded-xl bg-drone-accent flex items-center justify-center glow-accent">
+      <div className="w-10 h-10 rounded-xl bg-drone-accent flex items-center justify-center">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-6 h-6 text-drone-bg">
           <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
         </svg>
@@ -61,8 +62,8 @@ export default function Sidebar() {
             key={item.path}
             to={item.path}
             className={({ isActive }) =>
-              `w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 group ${
-                isActive ? 'bg-drone-accent text-drone-bg glow-accent' : 'text-drone-text-dim hover:bg-drone-card hover:text-drone-text'
+              `w-10 h-10 rounded-xl flex items-center justify-center transition-colors duration-200 group ${
+                isActive ? 'bg-drone-accent text-drone-bg' : 'text-drone-text-dim hover:bg-drone-card hover:text-drone-text'
               }`
             }
             title={item.label}
@@ -73,11 +74,13 @@ export default function Sidebar() {
       </nav>
 
       <div className="mt-auto flex flex-col gap-4 items-center">
-        <div className="w-2 h-2 rounded-full bg-drone-success animate-pulse" title="System Ready" />
+        <div className="w-2 h-2 rounded-full bg-drone-success" title="Tizim tayyor" />
         <div className="w-8 h-8 rounded-full bg-drone-card border border-drone-border overflow-hidden p-1 opacity-50">
           <div className="w-full h-full rounded-full bg-drone-text-dim" />
         </div>
       </div>
     </aside>
   );
-}
+});
+
+export default Sidebar;

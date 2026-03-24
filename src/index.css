@@ -50,14 +50,12 @@
 
 @layer utilities {
   .glass {
-    background: rgba(17, 24, 39, 0.7);
-    backdrop-filter: blur(12px);
+    background: rgba(10, 14, 23, 0.95);
     border: 1px solid rgba(30, 41, 59, 0.5);
   }
 
   .glass-card {
-    background: rgba(26, 32, 53, 0.8);
-    backdrop-filter: blur(16px);
+    background: rgba(17, 24, 39, 0.9);
     border: 1px solid rgba(30, 41, 59, 0.6);
     border-radius: 12px;
   }
