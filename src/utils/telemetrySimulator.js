@@ -68,11 +68,9 @@ class TelemetrySimulator {
         pitch = -15 + pitchBase; // Leaning forward
         groundSpeed = 12 + Math.sin(this.time * 0.4) * 2;
       } else {
-        // Target reached
+        // Target reached - TRIGGER EXPLOSION
         this.target = null;
-        this.missionPhase = 'hover';
-        groundSpeed = 0.5;
-        this.heading = (this.heading + Math.sin(this.time * 0.1) * 2 + 360) % 360;
+        return { exploded: true };
       }
     } else {
       // HOVER BY DEFAULT instead of orbiting at start.

@@ -160,6 +160,26 @@ const useDroneStore = create((set, get) => ({
     state.addAlert({ type: 'warning', message: 'RETURN TO HOME ACTIVATED' });
     set({ flightMode: 'RTL' });
   },
+
+  setInstantTarget: (point) => set(() => ({
+    mission: {
+      waypoints: [{ id: Date.now(), lat: point.lat, lng: point.lng, alt: 50, type: 'WAYPOINT' }],
+      currentWaypoint: 0,
+      totalWaypoints: 1,
+      missionActive: true,
+    },
+    selectedPoint: null,
+  })),
+
+  isExploded: false,
+  setExploded: (exploded) => set({ isExploded: exploded }),
+  
+  resetDrone: () => set((state) => ({
+    isExploded: false,
+    mission: { ...state.mission, missionActive: false, waypoints: [] },
+    position: { ...state.position, lat: state.home.lat, lng: state.home.lng, alt: 0 },
+    attitude: { pitch: 0, roll: 0, yaw: 0, heading: 0 },
+  })),
 }));
 
 export default useDroneStore;

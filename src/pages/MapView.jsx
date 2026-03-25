@@ -13,24 +13,27 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-// Realistic Drone Icon using the generated image
-const droneIcon = new L.Icon({
-  iconUrl: '/drone.png',
-  iconSize: [64, 64],
-  iconAnchor: [32, 32],
-  className: 'drone-icon-glow',
-});
-
-// Component to handle map center updates
+// Component to handle map center updates (INP Optimized: ZERO React re-renders)
 const MapController = memo(({ followDrone }) => {
   const map = useMap();
-  const position = useDroneStore((s) => s.position, shallow);
+  const followRef = useRef(followDrone);
   
   useEffect(() => {
-    if (followDrone && position.lat && position.lng) {
-      map.setView([position.lat, position.lng], map.getZoom(), { animate: false });
-    }
-  }, [position.lat, position.lng, followDrone, map]);
+    followRef.current = followDrone;
+  }, [followDrone]);
+
+  useEffect(() => {
+    const unsubscribe = useDroneStore.subscribe(
+      (state) => state.position,
+      (pos) => {
+        if (followRef.current && pos.lat && pos.lng) {
+          map.setView([pos.lat, pos.lng], map.getZoom(), { animate: false });
+        }
+      },
+      { fireImmediately: false, equalityFn: (a, b) => a.lat === b.lat && a.lng === b.lng }
+    );
+    return unsubscribe;
+  }, [map]);
   
   return null;
 });
@@ -46,21 +49,86 @@ const MapClickHandler = memo(() => {
   return null;
 });
 
+// Drone Marker (INP Optimized: direct DOM/Leaflet updates, ZERO React re-renders for movement)
 const DroneMarker = memo(() => {
-  const position = useDroneStore((s) => s.position, shallow);
-  const heading = useDroneStore((s) => s.attitude.heading);
+  const isExploded = useDroneStore((s) => s.isExploded);
   const markerRef = useRef(null);
 
-  useEffect(() => {
-    if (markerRef.current) {
-      const el = markerRef.current.getElement();
-      if (el) {
-        el.style.transform = `${el.style.transform.replace(/rotate\([^)]*\)/g, '')} rotate(${heading}deg)`;
-      }
-    }
-  }, [heading, position.lat, position.lng]);
+  // Use getState() for initial position to avoid reactive dependency
+  const initialPos = useDroneStore.getState().position;
 
-  return <Marker ref={markerRef} position={[position.lat, position.lng]} icon={droneIcon} />;
+  const droneIcon = new L.DivIcon({
+    className: 'custom-drone-marker',
+    html: `
+      <div id="drone-container" class="relative w-16 h-16 flex items-center justify-center transition-transform duration-200">
+        <img id="drone-img" src="${isExploded ? '/explosion.png' : '/drone.png'}" 
+             class="w-full h-full object-contain ${isExploded ? 'scale-[2.0]' : 'mix-blend-screen'} drop-shadow-[0_0_15px_rgba(34,211,238,0.6)]" />
+        ${!isExploded ? '<div class="absolute inset-0 border-2 border-drone-accent/20 rounded-full animate-ping"></div>' : ''}
+      </div>
+    `,
+    iconSize: [64, 64],
+    iconAnchor: [32, 32],
+  });
+
+  useEffect(() => {
+    if (isExploded) return;
+
+    const unsubscribePos = useDroneStore.subscribe(
+      (state) => state.position,
+      (pos) => {
+        if (markerRef.current) {
+          markerRef.current.setLatLng([pos.lat, pos.lng]);
+        }
+      },
+      { fireImmediately: false, equalityFn: (a, b) => a.lat === b.lat && a.lng === b.lng }
+    );
+
+    const unsubscribeAtt = useDroneStore.subscribe(
+      (state) => state.attitude,
+      (att) => {
+        if (markerRef.current) {
+          const el = markerRef.current.getElement();
+          const inner = el?.querySelector('#drone-container');
+          if (inner) {
+            inner.style.transform = `rotate(${att.heading}deg)`;
+          }
+        }
+      },
+      { fireImmediately: false, equalityFn: (a, b) => a.heading === b.heading }
+    );
+
+    return () => {
+      unsubscribePos();
+      unsubscribeAtt();
+    };
+  }, [isExploded]);
+
+  return <Marker ref={markerRef} position={[initialPos.lat, initialPos.lng]} icon={droneIcon} />;
+});
+
+// Custom Zoom Controls that actually work
+const ZoomControls = memo(() => {
+  const map = useMap();
+  return (
+    <div className="flex flex-col gap-1 bg-drone-bg/80 backdrop-blur-sm p-1 rounded-xl border border-drone-border">
+      <button 
+        onClick={() => map.zoomIn()}
+        className="w-10 h-10 flex items-center justify-center text-drone-text hover:text-drone-accent transition-colors"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5">
+          <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+      </button>
+      <button 
+        onClick={() => map.zoomOut()}
+        className="w-10 h-10 flex items-center justify-center text-drone-text hover:text-drone-accent transition-colors"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5">
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+      </button>
+    </div>
+  );
 });
 
 const SelectionMarker = memo(() => {
@@ -98,7 +166,9 @@ const MapOverlay = memo(() => {
   const position = useDroneStore((s) => s.position, shallow);
   const selectedPoint = useDroneStore((s) => s.selectedPoint, shallow);
   const setSelectedPoint = useDroneStore((s) => s.setSelectedPoint);
-  const addWaypoint = useDroneStore((s) => s.addWaypoint);
+  const setInstantTarget = useDroneStore((s) => s.setInstantTarget);
+  const isExploded = useDroneStore((s) => s.isExploded);
+  const resetDrone = useDroneStore((s) => s.resetDrone);
 
   return (
     <div className="absolute top-4 left-4 z-[1000] flex flex-col gap-2 pointer-events-none">
@@ -116,7 +186,19 @@ const MapOverlay = memo(() => {
         </div>
       </div>
 
-      {selectedPoint && (
+      {isExploded && (
+        <div className="glass-card p-4 border-drone-danger animate-pulse flex flex-col gap-3 pointer-events-auto">
+          <span className="text-drone-danger font-bold text-center uppercase tracking-tighter text-sm">NISHON YO'Q QILINDI!</span>
+          <button 
+            onClick={resetDrone}
+            className="w-full py-2 bg-drone-danger text-white text-[10px] font-bold uppercase rounded-lg hover:brightness-110 active:scale-95 transition-all"
+          >
+            Yangi dron uchirish
+          </button>
+        </div>
+      )}
+
+      {selectedPoint && !isExploded && (
         <div className="glass-card p-3 border-drone-accent animate-slide-in flex flex-col gap-3 pointer-events-auto">
           <div className="flex items-center justify-between">
             <span className="text-[10px] text-drone-accent uppercase font-bold tracking-widest">Tanlangan nuqta</span>
@@ -138,12 +220,11 @@ const MapOverlay = memo(() => {
           </div>
           <button
             onClick={() => {
-              addWaypoint({ lat: selectedPoint.lat, lng: selectedPoint.lng, alt: 50 });
-              setSelectedPoint(null);
+              setInstantTarget({ lat: selectedPoint.lat, lng: selectedPoint.lng });
             }}
-            className="w-full py-2 bg-drone-accent text-drone-bg text-[10px] font-bold uppercase rounded-lg hover:brightness-110 active:scale-95 transition-all"
+            className="w-full py-2 bg-drone-accent text-drone-bg text-[10px] font-bold uppercase rounded-lg hover:brightness-110 active:scale-95 transition-all shadow-[0_0_15px_rgba(34,211,238,0.4)]"
           >
-            Nuqta qoʻshish
+            Nuqtaga uchish
           </button>
         </div>
       )}
@@ -172,37 +253,24 @@ const MapView = memo(() => {
         <FlightPath />
         <DroneMarker />
         <SelectionMarker />
+        <div className="absolute bottom-4 right-4 z-[1000] flex flex-col gap-2">
+          <button 
+            onClick={() => setFollowDrone(!followDrone)}
+            className={`w-12 h-12 glass-card flex items-center justify-center transition-all duration-300 ${
+              followDrone ? 'text-drone-accent border-drone-accent' : 'text-drone-text-dim'
+            }`}
+            title={followDrone ? "Avto-kuzatish: YOQILGAN" : "Avto-kuzatish: O'CHIRILGAN"}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-6 h-6">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+              {followDrone && <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1" className="animate-ping opacity-20" />}
+            </svg>
+          </button>
+          <ZoomControls />
+        </div>
       </MapContainer>
 
       <MapOverlay />
-
-      <div className="absolute bottom-4 right-4 z-[1000] flex flex-col gap-2">
-        <button 
-          onClick={() => setFollowDrone(!followDrone)}
-          className={`w-12 h-12 glass-card flex items-center justify-center transition-all duration-300 ${
-            followDrone ? 'text-drone-accent border-drone-accent' : 'text-drone-text-dim'
-          }`}
-          title={followDrone ? "Avto-kuzatish: YOQILGAN" : "Avto-kuzatish: O'CHIRILGAN"}
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-6 h-6">
-            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-            {followDrone && <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1" className="animate-ping opacity-20" />}
-          </svg>
-        </button>
-        
-        <div className="flex flex-col gap-1 bg-drone-bg/80 backdrop-blur-sm p-1 rounded-xl border border-drone-border">
-          <button className="w-10 h-10 flex items-center justify-center text-drone-text hover:text-drone-accent transition-colors">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5">
-              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-          </button>
-          <button className="w-10 h-10 flex items-center justify-center text-drone-text hover:text-drone-accent transition-colors">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5">
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-          </button>
-        </div>
-      </div>
     </div>
   );
 });

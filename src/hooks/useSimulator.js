@@ -22,6 +22,12 @@ export default function useSimulator() {
     setHome(41.311081, 69.240562, 0);
 
     sim.start((data) => {
+      if (data.exploded) {
+        const store = useDroneStore.getState();
+        store.setExploded(true);
+        store.addAlert({ type: 'danger', message: 'NISHON YO\'Q QILINDI (PORTLASH)' });
+        return;
+      }
       updateTelemetry(data);
     }, 200);
 
