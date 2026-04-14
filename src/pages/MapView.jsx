@@ -49,62 +49,7 @@ const MapClickHandler = memo(() => {
   return null;
 });
 
-// Drone Marker (INP Optimized: direct DOM/Leaflet updates, ZERO React re-renders for movement)
-const DroneMarker = memo(() => {
-  const isExploded = useDroneStore((s) => s.isExploded);
-  const markerRef = useRef(null);
-
-  // Use getState() for initial position to avoid reactive dependency
-  const initialPos = useDroneStore.getState().position;
-
-  const droneIcon = new L.DivIcon({
-    className: 'custom-drone-marker',
-    html: `
-      <div id="drone-container" class="relative w-16 h-16 flex items-center justify-center transition-transform duration-200">
-        <img id="drone-img" src="${isExploded ? '/explosion.png' : '/drone.png'}" 
-             class="w-full h-full object-contain ${isExploded ? 'scale-[2.0]' : 'mix-blend-screen'} drop-shadow-[0_0_15px_rgba(34,211,238,0.6)]" />
-        ${!isExploded ? '<div class="absolute inset-0 border-2 border-drone-accent/20 rounded-full animate-ping"></div>' : ''}
-      </div>
-    `,
-    iconSize: [64, 64],
-    iconAnchor: [32, 32],
-  });
-
-  useEffect(() => {
-    if (isExploded) return;
-
-    const unsubscribePos = useDroneStore.subscribe(
-      (state) => state.position,
-      (pos) => {
-        if (markerRef.current) {
-          markerRef.current.setLatLng([pos.lat, pos.lng]);
-        }
-      },
-      { fireImmediately: false, equalityFn: (a, b) => a.lat === b.lat && a.lng === b.lng }
-    );
-
-    const unsubscribeAtt = useDroneStore.subscribe(
-      (state) => state.attitude,
-      (att) => {
-        if (markerRef.current) {
-          const el = markerRef.current.getElement();
-          const inner = el?.querySelector('#drone-container');
-          if (inner) {
-            inner.style.transform = `rotate(${att.heading}deg)`;
-          }
-        }
-      },
-      { fireImmediately: false, equalityFn: (a, b) => a.heading === b.heading }
-    );
-
-    return () => {
-      unsubscribePos();
-      unsubscribeAtt();
-    };
-  }, [isExploded]);
-
-  return <Marker ref={markerRef} position={[initialPos.lat, initialPos.lng]} icon={droneIcon} />;
-});
+import Drone3DOverlay from '../components/dashboard/Drone3DOverlay';
 
 // Custom Zoom Controls that actually work
 const ZoomControls = memo(() => {
@@ -242,7 +187,7 @@ const MapView = memo(() => {
         zoom={16}
         className="h-full w-full"
         zoomControl={false}
-        preferCanvas={true}
+        preferCanvas={false}
       >
         <TileLayer
           url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
@@ -251,8 +196,8 @@ const MapView = memo(() => {
         <MapController followDrone={followDrone} />
         <MapClickHandler />
         <FlightPath />
-        <DroneMarker />
         <SelectionMarker />
+        <Drone3DOverlay />
         <div className="absolute bottom-4 right-4 z-[1000] flex flex-col gap-2">
           <button 
             onClick={() => setFollowDrone(!followDrone)}

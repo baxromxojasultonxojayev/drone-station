@@ -218,57 +218,125 @@ export default function ArtificialHorizon() {
 
       ctx.restore();
 
-      // Flight info overlay
+      // Vertical Speed Tape (Left)
       ctx.save();
+      const speedX = 20;
+      const speedW = 45;
+      const speedH = h * 0.7;
+      const speedY = (h - speedH) / 2;
+
+      ctx.fillStyle = 'rgba(0,0,0,0.4)';
+      ctx.fillRect(speedX, speedY, speedW, speedH);
+      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+      ctx.strokeRect(speedX, speedY, speedW, speedH);
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(speedX, speedY, speedW, speedH);
+      ctx.clip();
+
+      const speedScale = 4; // pixels per unit
+      const speedValue = position.airSpeed;
+
+      ctx.textAlign = 'right';
+      ctx.font = 'bold 11px Inter, monospace';
+      
+      for (let i = -10; i <= 10; i++) {
+        const val = Math.round(speedValue / 5) * 5 + i * 5;
+        if (val < 0) continue;
+        const y = speedY + speedH/2 - (val - speedValue) * speedScale;
+        
+        ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+        ctx.beginPath();
+        ctx.moveTo(speedX + speedW, y);
+        ctx.lineTo(speedX + speedW - (val % 10 === 0 ? 12 : 6), y);
+        ctx.stroke();
+
+        if (val % 10 === 0) {
+          ctx.fillStyle = 'rgba(255,255,255,0.8)';
+          ctx.fillText(val.toString(), speedX + speedW - 15, y + 4);
+        }
+      }
+      ctx.restore();
+
+      // Current Speed Box
+      ctx.fillStyle = '#111827';
+      ctx.strokeStyle = '#22d3ee';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(speedX + speedW, speedY + speedH/2);
+      ctx.lineTo(speedX + speedW - 10, speedY + speedH/2 - 10);
+      ctx.lineTo(speedX + 5, speedY + speedH/2 - 10);
+      ctx.lineTo(speedX + 5, speedY + speedH/2 + 10);
+      ctx.lineTo(speedX + speedW - 10, speedY + speedH/2 + 10);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.font = 'bold 13px Inter, monospace';
+      ctx.fillText(Math.round(speedValue).toString(), speedX + speedW/2 + 5, speedY + speedH/2 + 5);
+      ctx.restore();
+
+      // Vertical Altitude Tape (Right)
+      ctx.save();
+      const altX = w - 65;
+      const altW = 45;
+      const altH = h * 0.7;
+      const altY = (h - altH) / 2;
+
+      ctx.fillStyle = 'rgba(0,0,0,0.4)';
+      ctx.fillRect(altX, altY, altW, altH);
+      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+      ctx.strokeRect(altX, altY, altW, altH);
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(altX, altY, altW, altH);
+      ctx.clip();
+
+      const altScale = 2; // pixels per meter
+      const altValue = position.relativeAlt;
+
+      ctx.textAlign = 'left';
       ctx.font = 'bold 11px Inter, monospace';
 
-      // Speed (left)
-      ctx.fillStyle = 'rgba(0,0,0,0.5)';
-      ctx.fillRect(10, cy - 40, 55, 80);
-      ctx.strokeStyle = 'rgba(34,211,238,0.3)';
-      ctx.strokeRect(10, cy - 40, 55, 80);
+      for (let i = -10; i <= 10; i++) {
+        const val = Math.round(altValue / 10) * 10 + i * 10;
+        if (val < 0) continue;
+        const y = altY + altH/2 - (val - altValue) * altScale;
 
-      ctx.fillStyle = '#94a3b8';
-      ctx.textAlign = 'left';
-      ctx.font = '9px Inter';
-      ctx.fillText('YER TEZ.', 14, cy - 26);
+        ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+        ctx.beginPath();
+        ctx.moveTo(altX, y);
+        ctx.lineTo(altX + (val % 50 === 0 ? 12 : 6), y);
+        ctx.stroke();
+
+        if (val % 20 === 0) {
+          ctx.fillStyle = 'rgba(255,255,255,0.8)';
+          ctx.fillText(val.toString(), altX + 15, y + 4);
+        }
+      }
+      ctx.restore();
+
+      // Current Altitude Box
+      ctx.fillStyle = '#111827';
+      ctx.strokeStyle = '#22d3ee';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(altX, altY + altH/2);
+      ctx.lineTo(altX + 10, altY + altH/2 - 12);
+      ctx.lineTo(altX + altW - 5, altY + altH/2 - 12);
+      ctx.lineTo(altX + altW - 5, altY + altH/2 + 12);
+      ctx.lineTo(altX + 10, altY + altH/2 + 12);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 14px Inter, monospace';
-      ctx.fillText(`${position.groundSpeed}`, 14, cy - 10);
-      ctx.fillStyle = '#94a3b8';
-      ctx.font = '8px Inter';
-      ctx.fillText('m/s', 14, cy);
-
-      ctx.fillStyle = '#94a3b8';
-      ctx.font = '9px Inter';
-      ctx.fillText('HAVO TEZ.', 14, cy + 16);
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 14px Inter, monospace';
-      ctx.fillText(`${position.airSpeed}`, 14, cy + 32);
-
-      // Altitude (right)
-      ctx.fillStyle = 'rgba(0,0,0,0.5)';
-      ctx.fillRect(w - 65, cy - 40, 55, 80);
-      ctx.strokeStyle = 'rgba(34,211,238,0.3)';
-      ctx.strokeRect(w - 65, cy - 40, 55, 80);
-
-      ctx.fillStyle = '#94a3b8';
-      ctx.textAlign = 'left';
-      ctx.font = '9px Inter';
-      ctx.fillText('BALANDL.', w - 60, cy - 26);
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 14px Inter, monospace';
-      ctx.fillText(`${position.relativeAlt}`, w - 60, cy - 10);
-      ctx.fillStyle = '#94a3b8';
-      ctx.font = '8px Inter';
-      ctx.fillText('m', w - 60, cy);
-
-      ctx.fillStyle = '#94a3b8';
-      ctx.font = '9px Inter';
-      ctx.fillText('V. TEZLIK', w - 60, cy + 16);
-      ctx.fillStyle = position.climbRate >= 0 ? '#10b981' : '#ef4444';
-      ctx.font = 'bold 14px Inter, monospace';
-      ctx.fillText(`${position.climbRate > 0 ? '+' : ''}${position.climbRate}`, w - 60, cy + 32);
+      ctx.textAlign = 'center';
+      ctx.font = 'bold 13px Inter, monospace';
+      ctx.fillText(Math.round(altValue).toString(), altX + altW/2 - 5, altY + altH/2 + 5);
+      ctx.restore();
 
       ctx.restore();
 

@@ -19,10 +19,12 @@ function App() {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-drone-bg text-drone-text selection:bg-drone-accent/30">
-      <Sidebar />
-      
       <div className="flex-1 flex flex-col min-w-0">
-        <TopBar />
+        {/* TopBar is removed or integrated into Dashboard for GCS feel, 
+            but for now we keep it and just make sure main is full height */}
+        <div className="hidden lg:block">
+           <TopBar />
+        </div>
         
         <main className="flex-1 min-h-0 relative">
           <Routes>
@@ -33,6 +35,9 @@ function App() {
           </Routes>
         </main>
       </div>
+
+      {/* Move Sidebar to right or make it optional for the GCS view */}
+      <Sidebar />
     </div>
   );
 }

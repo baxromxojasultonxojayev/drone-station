@@ -1,6 +1,7 @@
 import { create } from 'zustand';
+import { subscribeWithSelector } from 'zustand/middleware';
 
-const useDroneStore = create((set, get) => ({
+const useDroneStore = create(subscribeWithSelector((set, get) => ({
   // Connection
   connected: false,
   connectionType: 'none', // 'websocket', 'serial', 'simulation'
@@ -45,11 +46,17 @@ const useDroneStore = create((set, get) => ({
     fixType: 0, // 0=No, 1=No, 2=2D, 3=3D
   },
 
-  // Signals
   signals: {
     rc: 0,
     telemetry: 0,
     video: 0,
+  },
+
+  // Motors & Sensors
+  motors: [],
+  esc: {
+    temp: 0,
+    voltage: 0,
   },
 
   // Home position
@@ -91,6 +98,8 @@ const useDroneStore = create((set, get) => ({
     battery: { ...state.battery, ...data.battery },
     gps: { ...state.gps, ...data.gps },
     signals: { ...state.signals, ...data.signals },
+    motors: data.motors || state.motors,
+    esc: { ...state.esc, ...data.esc },
     lastHeartbeat: Date.now(),
   })),
 
@@ -180,6 +189,6 @@ const useDroneStore = create((set, get) => ({
     position: { ...state.position, lat: state.home.lat, lng: state.home.lng, alt: 0 },
     attitude: { pitch: 0, roll: 0, yaw: 0, heading: 0 },
   })),
-}));
+})));
 
 export default useDroneStore;

@@ -50,23 +50,29 @@ class TelemetrySimulator {
       const distance = Math.sqrt(dLat * dLat + dLng * dLng);
 
       if (distance > 0.00005) {
-        // Move towards target
-        const step = Math.min(this.speed, distance);
-        this.currentPosition.lat += (dLat / distance) * step;
-        this.currentPosition.lng += (dLng / distance) * step;
-        
-        // Calculate bearing
+        // Calculate bearing and heading error
         const bearing = (Math.atan2(dLng, dLat) * 180 / Math.PI + 360) % 360;
+        let headingError = bearing - this.heading;
+        if (headingError > 180) headingError -= 360;
+        if (headingError < -180) headingError += 360;
         
-        // Smoothly rotate heading
-        let diff = bearing - this.heading;
-        if (diff > 180) diff -= 360;
-        if (diff < -180) diff += 360;
-        this.heading += diff * 0.2;
+        // Priority: Turn first, move second
+        const isTurning = Math.abs(headingError) > 10;
+        const turnSpeed = isTurning ? 0.35 : 0.15; // Faster rotation when error is large
+        this.heading += headingError * turnSpeed;
 
-        // Lean into movement
-        pitch = -15 + pitchBase; // Leaning forward
-        groundSpeed = 12 + Math.sin(this.time * 0.4) * 2;
+        // Linear movement speed depends on current alignment
+        // If not aligned, slow down significantly to "turn in place"
+        const alignmentFactor = Math.max(0, 1 - Math.abs(headingError) / 45);
+        const actualStep = Math.min(this.speed, distance) * (isTurning ? 0.2 : alignmentFactor);
+
+        this.currentPosition.lat += (dLat / distance) * actualStep;
+        this.currentPosition.lng += (dLng / distance) * actualStep;
+
+        // Lean into movement (roll) and forward (pitch)
+        roll = headingError * 0.8; 
+        pitch = -15 * alignmentFactor + pitchBase; 
+        groundSpeed = 12 * alignmentFactor + Math.sin(this.time * 0.4) * 2;
       } else {
         // Target reached - TRIGGER EXPLOSION
         this.target = null;
@@ -132,6 +138,16 @@ class TelemetrySimulator {
         telemetry: Math.floor(telemetrySignal),
         video: Math.floor(videoSignal),
       },
+      motors: [
+        { rpm: Math.floor(5400 + Math.sin(this.time * 2) * 200), temp: Math.floor(45 + Math.sin(this.time * 0.1) * 2) },
+        { rpm: Math.floor(5440 + Math.cos(this.time * 2) * 180), temp: Math.floor(46 + Math.cos(this.time * 0.1) * 2) },
+        { rpm: Math.floor(5380 + Math.sin(this.time * 2.1) * 150), temp: Math.floor(44 + Math.sin(this.time * 0.12) * 2) },
+        { rpm: Math.floor(5410 + Math.cos(this.time * 1.9) * 220), temp: Math.floor(47 + Math.cos(this.time * 0.08) * 2) },
+      ],
+      esc: {
+        temp: Math.floor(38 + Math.sin(this.time * 0.05) * 5),
+        voltage: parseFloat((this.batteryPercent * 0.168).toFixed(2)),
+      }
     };
   }
 }
